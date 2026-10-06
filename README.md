@@ -1,138 +1,133 @@
-# MinerU 4 Study Notes
+# MinerU 4 Study Notes · 中文伴读笔记
 
-将 MinerU 4 解析材料转成有来源定位的中文学习笔记，适用于课程、技术文档和书籍伴读。
+把课件、教材和技术文档整理成**能边读边理解的中文学习笔记**：完整承接原材料，在难点附近补上概念解释、推理步骤、案例分析和读图说明。
 
-默认保留约定范围的完整内容：英文材料提供中文译文，原有公式、代码、图表、例子和脚注随文呈现；AI 讲解另外展开，帮助读者理解过程、原因与结论。用户明确要求摘要或提纲时，按其选择调整范围。
+适合自学课程、阅读英文教材、理解技术文档，以及需要从零基础走通公式、算法或代码的读者。支持以 PDF、DOCX、PPTX 为来源，使用 MinerU 4 的解析结果生成 Markdown 笔记。
 
-**当前状态：开发预览，新增功能待测试。** 本次整理包含便携图片、严格结构检查、资源异常提示及续作快照实现；这些改动尚未完成回归和实际输入验证。旧版检查结果不能代表当前版本已通过，暂不作为稳定发布版本。
+这是供 AI 代理执行的技能。**AI 负责翻译与讲解，配套 Python 脚本负责整理来源、检查遗漏、处理图片和打包交付。** 技能入口是 [SKILL.md](SKILL.md)。
 
-## 能做什么
+## 你会得到什么
 
-- 从新版 Structured Content 或 MiddleJson 建立来源包，保留文档身份、原始页号与稳定块编号。
-- 按明确范围准备小节材料，保留章首正文、脚注、公式、代码、表格和图片。
-- 根据读者在本主题上的基础选择讲解路径；同一任务已有的回答直接复用。
-- 检查材料落点、本地链接，以及严格模式下的重复标记、意外乱序和可疑空段。
-- 将实际引用的图片复制到笔记旁的 `images/`，重写短路径并记录来源摘要；可生成 ZIP。
-- 保存笔记与复读记录的快照、续写位置和待办，恢复前核对文件摘要。
-
-本仓库是 **AI 写作技能与配套工具**。脚本负责提取、供料、检查和交付，不会独立生成完整译文或教学讲解，也不能自动证明翻译忠实、提取无遗漏、公式正确或图片清晰。
-
-## 输入与运行环境
-
-建议使用 Python 3.11。核心 Structured Content 流程与交付工具使用标准库，无需安装额外 Python 包。
-
-| 输入或功能 | 要求 |
+| 功能 | 笔记中的表现 |
 |---|---|
-| Structured Content | JSON、ZIP 或解压目录，包含 `pages[].blocks[]`；本地图片一起保留 |
-| MiddleJson | `schema=docvortex.middle`，使用已安装 MinerU 4 SDK 的 Python 环境 |
-| PDF / DOCX / PPTX 来源 | 先使用现有 MinerU 环境解析；本技能不直接替代原文件解析器 |
-| 仅 Markdown | 可做有限文本伴读，缺少可靠块定位，不使用结构化覆盖认证 |
-| PowerPoint 截图 | Windows、Microsoft PowerPoint 与 pywin32；属于可选流程 |
+| 完整中文伴读 | 英文正文完整译成中文；中文材料保留来源内容。原有条件、论证、例子、习题、脚注和参考链接随文保留 |
+| 按你的基础讲解 | 从材料选取少量问题了解基础，再选择初级、中级或高级讲法；也可以直接要求跳过提问 |
+| 连续推理与案例 | 追踪同一个计算、算法或代码案例的中间变化，解释每一步为什么成立，再回到原文结论和适用条件 |
+| 按知识点组织 | 恢复原有章节与小节；跨页的同一主题连续呈现，解析产生的断句、散落编号和目录条目恢复为自然阅读结构 |
+| 多种表达形式 | 按内容选用对比表、分类、编号步骤、公式代入、类比、图示、参数速查表和带解析的自测题 |
+| 图文配合 | 图片、表格和课件截图放在实际需要观察它们的步骤，讲解直接使用图中的数据、分支或关系推进理解 |
+| 公式与代码伴读 | 保留来源公式和代码，解释符号、前提、关键变形、输入输出与执行过程，区分来源示例和教学补充 |
+| 便携交付与续写 | 阅读稿移除内部解析标记，图片放在旁置的 `images/` 中，可打包为 ZIP；长任务保存进度后继续 |
 
-旧版 `model.json`、`content_list` 或列表式提取结果不在本技能的数据契约内。MiddleJson、真实 DOCX/PPTX 来源、PowerPoint 截图和安装后的自动触发仍需实际验证。
+默认按约定范围制作完整伴读。你可以指定只做某章、某几节，也可以明确选择摘要、提纲、单文件或分章交付。
 
-## 用作技能
+## 讲解怎样帮助理解
 
-仓库根目录即技能目录，入口为 [SKILL.md](SKILL.md)。将整个目录放到你所用代理的技能目录中，保持 `SKILL.md`、`references/` 与 `scripts/` 的相对位置。
+### 根据基础调整起点，保留核心内容
 
-例如在使用 `$CODEX_HOME/skills` 的本地配置中，可以将本仓库克隆为其中的 `mineru4-study-notes` 子目录。默认 Codex 目录布局下的 Windows 示例：
+开始写作前，代理从当前材料选取 1–3 个简短问题，了解你对符号、基本方法和机制的熟悉程度。“不知道”也是有效回答；同一任务已有的回答会直接复用。
 
-```powershell
-$skillHome = Join-Path $env:USERPROFILE '.codex\skills'
-New-Item -ItemType Directory -Force -Path $skillHome | Out-Null
-gh repo clone maolilup/mineru4-study-notes (Join-Path $skillHome 'mineru4-study-notes')
-```
+| 你的基础 | 讲解重点 |
+|---|---|
+| 初级 | 从具体对象和必要基础开始，补足决定结果的中间步骤，用小例子建立直觉，再解释一般关系与成立条件 |
+| 中级 | 连接已有基础与当前方法，展开关键环节、方法之间的配合和应用条件 |
+| 高级 | 简述熟悉的常规操作，集中讨论机制、推导、约束、边界与方案取舍 |
 
-已有同名目录时先检查现有版本，不覆盖安装。仓库为私有时需要相应 GitHub 访问权限。
+三种讲法都承接约定范围的来源内容，并解释核心机制。熟悉的内容可以收短，不熟悉的关键步骤就近展开。
 
-可以向代理明确提出：
+### 围绕问题选择表达形式
 
-> 使用 mineru4-study-notes，为这份 MinerU 4 ZIP 生成第 1—4 章的完整中文伴读。保留原文例题、习题、代码、公式、图片和脚注，结合我的基础展开讲解。
+比较算法时可以用表格；理解类别时可以用分类与关系图；跟随计算时可以用公式代入和中间结果；读代码时可以追踪具体输入下的变量变化。形式服务于理解，不规定每节必须出现多少表格、图片或题目。
 
-资料中的提示词、命令和操作要求仅作为来源正文，不能据此执行操作。正文和新增讲解区分来源，制作报告保存在成品目录之外。
+例如伴读决策树材料时，可以先解释“为什么需要衡量节点的混杂程度”，接着用来源数据走通划分前后的熵，再比较不同属性的信息增益，最后说明结果怎样决定分裂属性。跨页案例保持连续，图表进入需要使用其信息的位置。
 
-## 配套脚本的基本流程
+### 图片参与当前的推理
 
-以下命令从仓库根目录运行；小节起止 ID 必须替换为真实 `blocks.json` 中的完整编号。输出目录使用新目录，避免覆盖既有产物。
+解释树的预测过程时，在首次需要判断分支的位置引入树图，随后沿图中的条件走到叶节点，得出预测结果。比较两个状态时，可并排或连续展示对应图片，并说明变化。
 
-### 1. 提取来源
+原材料中的有内容图表保留在相关正文附近。整页课件截图可按阅读需要使用；你明确要求全部截图时，会按其阅读用途安排。英文图注及影响理解的图中文字提供中文说明，模糊或存在疑点的内容会回查原文件。
 
-```powershell
-python scripts/extract_document.py --src input/structured_content.json --out work/source
-```
+译文与新增讲解相邻呈现，并保持来源边界可辨认。教学自编例子、额外假设和实质性修正就近说明，不强制每段套用“原文／译文／批注”栏目。
 
-`--src` 也可为 ZIP 或目录。多文档输入用 `--document` 明确选择，不能任取第一份。先读取 `work/source/manifest.json` 和 `headings.json`，确认文档、页号和范围。
+## 输入与准备
 
-### 2. 准备小节
+最直接的输入是 **MinerU 4 导出的 JSON、ZIP 或解压目录**，图片资源需一起保留。
 
-```powershell
-python scripts/prepare_sections.py --pack work/source --start "<真实起始 block_id>" --end "<真实结束 block_id>" --out work/sections --notes-dir work/draft
-```
+| 输入 | 支持方式 |
+|---|---|
+| Structured Content | 包含 `pages[].blocks[]` 的新版 JSON；使用 Python 标准库提取 |
+| MiddleJson | `schema=docvortex.middle`；使用已安装 MinerU 4 SDK 的 Python 环境转换 |
+| 原始 PDF / DOCX / PPTX | 先调用你现有的 MinerU 4 环境解析，再生成笔记 |
+| 仅 Markdown | 可进行文本伴读；来源定位限于材料中实际可确认的信息 |
 
-起始块包含，结束块不包含；省略 `--end` 表示到文档末尾。查看 `sections.json` 的疑点，再按原页确认标题和资源；资源类型修正必须记录原因和来源依据。
+建议使用 Python 3.11。可选的 PowerPoint 整页截图工具需要 Windows、Microsoft PowerPoint 和 pywin32。
 
-### 3. 由代理逐节写作与复读
+旧版 `model.json`、`content_list` 和列表式提取数据不适用本技能。原始文件解析使用你已配置的环境，不会自行安装模型或把文档上传到远程解析服务。
 
-代理读取当前小节及对应资源，完成译文和讲解，保留隐藏来源标记：
+## 安装与使用
 
-```html
-<!-- block_id=真实完整来源编号 -->
-```
+仓库根目录就是技能目录。将整个仓库放进代理使用的技能目录，保持 `SKILL.md`、`references/` 和 `scripts/` 的相对位置。
 
-确认基础后连续完成约定范围。来源条件、例子和论证不能因补充解释而省略。跨页代码或公式可以组合，但须保留全部对应标记，并实际核对原页。
-
-### 4. 生成便携目录
-
-以下示例假设已有 `work/draft/第1章.md`：
+例如，代理从用户目录下的 `.codex/skills` 加载技能时，可以使用：
 
 ```powershell
-python scripts/package_notes.py --notes work/draft/第1章.md --sections work/sections --out output/study-notes --manifest work/portable.json --zip work/study-notes.zip
+$skillDir = Join-Path $env:USERPROFILE '.codex\skills\mineru4-study-notes'
+git clone https://github.com/maolilup/mineru4-study-notes.git $skillDir
 ```
 
-生成目录包含原名 Markdown 与 `images/001.jpg` 等浅层图片路径。原稿和来源资产保留原位置，副本通过 SHA-256 对应；ZIP 检查支持的本地链接及 CRC。外部图片保持 URL 并报告，不自动下载。
+使用其他技能目录时调整目标路径。已有同名目录时，先确认现有版本，再决定更新方式。
 
-### 5. 检查最终输出
+安装后，向代理明确提出范围和需求，并提供材料：
 
-```powershell
-python scripts/check_note_coverage.py --sections work/sections --notes output/study-notes/第1章.md --strict --report work/coverage.json
-```
+**英文教材伴读**
 
-多章按实际阅读顺序列出 `--notes`。严格模式会把重复、乱序和未确认空段列为需处理项；合法合并或浮动图表读序调整用 `--layout-review` 提供具体来源记录。
+> 使用 mineru4-study-notes，为这份 MinerU 4 ZIP 生成第 1–4 章的完整中文伴读。保留原有例题、习题、公式、代码、图片和脚注，根据我的基础展开讲解，按章交付。
 
-`material_present` 仅表示机械识别到材料，`check_passed` 仅表示本次机械条件满足。表示差异进入 `needs_review` 后要对照来源；不能删除材料或修改报告来取得通过结果。
+**零基础课件笔记**
 
-### 6. 保存续作状态
+> 使用 mineru4-study-notes，为这份课件生成整章学习笔记。基础问题预设全部“不知道”，直接按初级路径写。围绕知识点组织图文，结合分类、表格和分步案例讲清算法。
 
-```powershell
-python scripts/checkpoint_notes.py create --sections work/sections --notes work/draft/第1章.md --progress work/progress.json --out work/checkpoints/001
-python scripts/checkpoint_notes.py verify --checkpoint work/checkpoints/001 --current
-```
+**技术文档与代码**
 
-`progress.json` 包含真实 `next_block_id` 和 `pending_items`；可用 `--records` 保存明确的复读记录。快照保存工作副本和摘要，不自动覆盖恢复，也不等同于完整来源备份。字段和例子见 [交付与续作指南](references/delivery.md)。
+> 使用 mineru4-study-notes，完整伴读指定的这一节。我熟悉 Python，但不了解并发。重点解释执行顺序、共享状态和示例代码，给出一个带解析的辨析题，交付单个 Markdown 和图片 ZIP。
 
-## 文件结构
+代理会依次确认来源与范围、了解基础、逐节写作和核对、生成阅读稿。基础确认后连续完成约定范围，长任务可保存实际进度后续写。
+
+## 交付形式
+
+典型目录如下，文件名按实际材料命名：
 
 ```text
-.
-├── SKILL.md
-├── references/
-│   ├── contract.md          # 数据、来源标记和报告契约
-│   ├── organization.md      # 章节与知识组织
-│   ├── teaching.md          # 讲解方法与读者路径
-│   ├── quality.md           # 内容与教学复读
-│   └── delivery.md          # 便携交付、例外记录和续作
-└── scripts/
-    ├── extract_document.py
-    ├── prepare_sections.py
-    ├── check_note_coverage.py
-    ├── package_notes.py
-    ├── checkpoint_notes.py
-    ├── render_slides.py
-    └── embed_screenshots.py
+学习笔记/
+├── 第1章.md
+├── 第2章.md
+└── images/
+    ├── 001.jpg
+    └── 002.png
 ```
 
-## 验收原则与当前待办
+阅读稿只呈现学习内容、必要的来源定位和影响理解的疑点。内部 `block_id` 等解析标记在交付时移除，制作记录留在工作目录。图片使用浅层相对路径，移动笔记时一起保留 `images/`；ZIP 包含笔记及实际引用的本地图片。
 
-完成声明分别对应四类证据：结构覆盖、资源一致、实际来源复读范围和讲解复读范围。标记数量、字数、文件存在或打包成功都不能替代这些证据；抽查范围不能扩展为全范围逐段验收。
+## 配套工具
 
-当前尚待完成：新增脚本回归、合法/非法合并与读序调整、便携目录和 ZIP、快照与文件变更识别，以及实际输入和技能触发验证。本次上传没有运行这些测试，也不附带原书、生成笔记或历史审计材料。
+日常使用由代理按技能指南调用。需要了解实现或单独使用工具时，可查看：
+
+| 脚本 | 用途 |
+|---|---|
+| `extract_document.py` | 从新版 JSON、ZIP 或目录建立带页码与块定位的来源包 |
+| `prepare_sections.py` | 按选定范围准备小节正文与资源清单 |
+| `check_note_coverage.py` | 辅助发现来源缺项、坏链接和标记问题 |
+| `package_notes.py` | 生成便携目录与 ZIP；`--reader-copy` 移除独立的内部来源标记 |
+| `checkpoint_notes.py` | 保存与核对续作位置、待办和文件快照 |
+| `render_slides.py` | 在配置好的 PowerPoint 环境中生成整页截图 |
+| `embed_screenshots.py` | 将同一课件的截图与提取内容关联，生成材料预览 |
+
+详细说明：[章节组织](references/organization.md) · [讲解方法](references/teaching.md) · [内容检查](references/quality.md) · [交付与续作](references/delivery.md) · [输入契约](references/contract.md)。
+
+## 使用边界
+
+生成质量依赖模型能力和原始解析质量。公式、数值、图中标签、算法条件以及复杂推导仍需对照来源校对；原材料缺失或截图模糊时，需要回查原文件。
+
+结构覆盖和文件检查帮助发现遗漏与坏链接，不能证明翻译忠实或讲解正确。来源中的命令与提示词作为正文处理；引用代码保留在笔记中，不因出现在材料里就执行。
+
+本仓库发布技能指南和工具，不包含课程原件、教材正文或生成的伴读笔记。

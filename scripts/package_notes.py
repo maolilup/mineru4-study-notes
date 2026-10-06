@@ -11,6 +11,19 @@ import zipfile
 from check_note_coverage import LINK, digest, mask_code, target
 
 HTML_URL = re.compile(r'<(?P<tag>img|a)\b[^>]*?\b(?P<attr>src|href)=["\'](?P<url>[^"\']+)["\']', re.I)
+SOURCE_METADATA = re.compile(
+    r'(?m)^[ \t]*<!--[ \t]*(?:block_id=[^\s>]+|page_idx=\d+)[ \t]*-->[ \t]*(?:\r?\n|$)'
+)
+
+
+def strip_source_metadata(text):
+    """Remove standalone audit markers while preserving source code examples."""
+    masked = mask_code(text)
+    matches = [m for m in SOURCE_METADATA.finditer(text)
+               if masked[m.start():m.end()].strip().startswith('<!--')]
+    for match in reversed(matches):
+        text = text[:match.start()] + text[match.end():]
+    return text, len(matches)
 
 
 def references(text):
@@ -92,7 +105,7 @@ def verify_zip(path):
     return checked
 
 
-def package(notes, out, manifest, archive=None, sections=None):
+def package(notes, out, manifest, archive=None, sections=None, reader_copy=False):
     files = list(dict.fromkeys(Path(n).resolve() for n in notes))
     out, manifest = Path(out).resolve(), Path(manifest).resolve()
     archive = Path(archive).resolve() if archive else None
@@ -156,10 +169,14 @@ def package(notes, out, manifest, archive=None, sections=None):
             raise ValueError(f'Overlapping link syntax needs manual conversion: {path}')
         for start, stop, replacement in sorted(edits, reverse=True):
             result = result[:start] + replacement + result[stop:]
+        removed = 0
+        if reader_copy:
+            result, removed = strip_source_metadata(result)
         rendered[path.name] = result
         note_records.append({'input': str(path), 'output': path.name,
                              'input_sha256': hashlib.sha256(original_bytes).hexdigest(),
-                             'output_sha256': hashlib.sha256(result.encode('utf-8')).hexdigest()})
+                             'output_sha256': hashlib.sha256(result.encode('utf-8')).hexdigest(),
+                             'source_metadata_removed': removed})
     # All link planning succeeds before creating files; inputs and source assets are untouched.
     for record in note_records:
         if digest(Path(record['input']), {}) != record['input_sha256']:
@@ -181,7 +198,7 @@ def package(notes, out, manifest, archive=None, sections=None):
     result = {'format': 'mineru4-portable-notes/1', 'source_id': source_id, 'output_directory': str(out),
               'notes': note_records, 'images': list(images.values()), 'external_images': external_images,
               'self_contained_images': not external_images, 'unavailable_source_assets': unavailable,
-              'local_links_checked': True,
+              'local_links_checked': True, 'reader_copy': reader_copy,
               'limits': 'Copied bytes and supported links only; no translation, visual or teaching certification.'}
     if archive:
         archive.parent.mkdir(parents=True, exist_ok=True)
@@ -205,8 +222,10 @@ if __name__ == '__main__':
     parser.add_argument('--manifest', required=True, help='New provenance JSON outside the notes directory')
     parser.add_argument('--zip', dest='archive', help='Optional new ZIP outside the notes directory')
     parser.add_argument('--sections', help='Optional section pack for source block/image identity')
+    parser.add_argument('--reader-copy', action='store_true',
+                        help='Remove standalone block_id/page_idx comments from delivered notes; keep input audit notes')
     args = parser.parse_args()
-    result = package(args.notes, args.out, args.manifest, args.archive, args.sections)
+    result = package(args.notes, args.out, args.manifest, args.archive, args.sections, args.reader_copy)
     print(json.dumps({'notes': len(result['notes']), 'images': len(result['images']),
                       'self_contained_images': result['self_contained_images'],
                       'zip': result.get('zip')}, ensure_ascii=False, indent=2))

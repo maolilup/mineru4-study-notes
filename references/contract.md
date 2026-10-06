@@ -42,7 +42,7 @@ PDF、DOCX、PPTX 统一通过新版结构读取；文档类型不保证标题�
 
 ## 输出标记与覆盖报告
 
-最终笔记在来源内容前保留隐藏标记 `<!-- block_id=完整编号 -->`；下一标记之前的内容为其直接区域。多个跨页块组合时连续放置多个标记，共享后续材料；严格模式需要已对照来源的合并记录。新增解释不另造来源编号。
+内部核对稿在来源内容前保留规范标记 `<!-- block_id=完整编号 -->`；下一标记之前的内容为其直接区域。恢复自然段、列表、表格或跨页续段时可连续放置多个标记，共享后续材料；严格模式需要已对照来源的合并记录，标记边界不决定阅读排版。新增解释不另造来源编号。最终阅读稿通过 `package_notes.py --reader-copy` 移除独立行的内部来源标记，必要来源定位使用页码或章节引用；核对稿与报告另存。
 
 `check_note_coverage.py --sections <section-pack> --notes <explicit-md-paths> --strict --report <json>` 按参数中的笔记阅读顺序检查，报告 missing、needs_review、broken_links、out_of_scope、duplicate_markers、source_order_issues、empty_direct_bodies、adjacent_merges、asset_matches 及 resource_anomalies。仅传实际笔记，不传 README/覆盖记录。缺项、需复读、坏链接或越界返回非零；严格模式另对重复、乱序及未确认空段返回非零，check_passed 只对应本次机械检查。旧调用省略 `--strict` 时保留宽松行为，后三种异常仍显示但不独立改变退出码。
 
@@ -52,4 +52,4 @@ PDF、DOCX、PPTX 统一通过新版结构读取；文档类型不保证标题�
 
 ## 便携目录与工作快照
 
-package_notes.py 的内部 manifest 使用 `mineru4-portable-notes/1`；保留笔记输入/输出摘要、实际引用的图片摘要与来源身份、外部图片及 ZIP 核对结果，独立于成品目录。checkpoint_notes.py 的 checkpoint.json 使用 `mineru4-work-checkpoint/1`；记录来源范围、续写位置、待办、笔记/记录副本与摘要、原来源包的关键文件摘要。两者均不改源包，不生成质量评分或自动完成认证。具体命令、恢复方式及支持边界见 [交付与续作指南](delivery.md)。
+package_notes.py 的内部 manifest 使用 `mineru4-portable-notes/1`；保留笔记输入/输出摘要、reader_copy、每份笔记移除的内部元数据数量、实际引用的图片摘要与来源身份、外部图片及 ZIP 核对结果，独立于成品目录。checkpoint_notes.py 的 checkpoint.json 使用 `mineru4-work-checkpoint/1`；记录来源范围、续写位置、待办、笔记/记录副本与摘要、原来源包的关键文件摘要。两者均不改源包，不生成质量评分或自动完成认证。具体命令、恢复方式及支持边界见 [交付与续作指南](delivery.md)。

@@ -1,32 +1,32 @@
 # 交付、复读证据与续作
 
-成品目录仅保留学习笔记及实际引用的资源。结构报告、原图对应关系、复读记录和快照放在独立工作目录，不将这些制作记录混入伴读正文。以下脚本使用 Python 标准库，不执行教材代码，也不下载外部资源。
+成品目录仅保留阅读稿及实际引用的资源。含来源标记的核对稿、结构报告、原图对应关系、复读记录和快照放在独立工作目录，不将这些制作记录混入伴读正文。先完成核对稿的内容与结构检查，再由定稿生成阅读稿；阅读稿不依赖阅读器隐藏注释。以下脚本使用 Python 标准库，不执行教材代码，也不下载外部资源。
 
 ## 便携图片与打包
 
 ```powershell
-python <skill-dir>/scripts/package_notes.py --notes <chapter1.md> <chapter2.md> --sections <section-pack> --out <new-delivery-dir> --manifest <work-dir/portable.json> --zip <delivery.zip>
+python <skill-dir>/scripts/package_notes.py --notes <audit-chapter1.md> <audit-chapter2.md> --sections <section-pack> --reader-copy --out <new-delivery-dir> --manifest <work-dir/portable.json> --zip <delivery.zip>
 ```
 
 `--out` 必须为空或不存在，manifest 和 ZIP 必须是成品目录外的新文件。不覆盖原稿、不移动源资产。`--zip` 可省略。结构化任务传 `--sections` 以记录来源块和原资产身份；纯 Markdown 可省略，但不能据此获得可靠来源块认证。
 
-产物为目录根部的原名 Markdown 与 `images/001.jpg` 等浅层图片路径。仅复制实际引用的图片，按 SHA-256 合并相同字节，不裁切、重绘或降低分辨率。普通指向图片的本地链接也复制；章节间链接改成同级文件名，保留 URL 的查询与片段。实际图注、正文与来源标记不变。manifest 记录原稿和输出摘要、原引用路径、图片摘要与可匹配的来源资产；相同图片可能对应多个源块，这只是字节身份。
+产物为目录根部的原名 Markdown 与 `images/001.jpg` 等浅层图片路径。仅复制实际引用的图片，按 SHA-256 合并相同字节，不裁切、重绘或降低分辨率。普通指向图片的本地链接也复制；章节间链接改成同级文件名，保留 URL 的查询与片段。`--reader-copy` 移除独立行的内部 `block_id`、`page_idx` 注释，保留代码示例中的同形文本，其余正文和图注不改写；核对稿不变。manifest 记录 reader_copy、移除数量、核对稿和输出摘要、原引用路径、图片摘要与可匹配的来源资产；相同图片可能对应多个源块，这只是字节身份。省略该参数保留原有带标记打包行为，供内部用途使用。
 
 工具检查生成目录的本地引用；指定 ZIP 时再检查 CRC 和归档内链接解析。这个运行时检查只涉及支持的引用与文件存在，不能证明渲染效果、文件内锚点、翻译或讲解正确。远程图片保留原 URL，报告 `external_images` 与 `self_contained_images=false`，不能称为完全离线交付。缺失来源资产记为 `unavailable_source_assets`，需处理后才能声称来源身份均核对。
 
 支持常见行内 Markdown 链接/图片及 HTML img/src、a/href。引用式 Markdown 链接/图片、Windows 绝对文件 URL、反斜杠路径会要求先转换；未选择的章节和其它本地附件明确报错，不能悄悄丢弃。含括号的路径可用尖括号包裹。不要通过删除链接让打包通过。工具不保证任意 Markdown 扩展语法都可迁移，特殊语法仍须实际查看。
 
-对**便携输出**再运行严格覆盖检查，传入与原稿相同的章节阅读顺序；相同图片副本按摘要命中。内部工作记录与原包留在原位置，不要求搬进 ZIP。
+严格覆盖检查针对含标记的定稿核对稿，报告写清该文件路径；无标记阅读稿不再送入块标记检查。阅读稿由打包工具检查最终本地引用和 ZIP，并实际查看目录、段落与图文位置。打包工具只去标记和迁移链接，不会修复碎段或截图堆积，必须在写作时恢复这些关系。正文修订先更新核对稿并重新核对，再生成新的阅读稿；内部工作记录与原包不要求搬进 ZIP。
 
 ## 严格结构检查与合法排版调整
 
 ```powershell
-python <skill-dir>/scripts/check_note_coverage.py --sections <section-pack> --notes <delivered-chapter1.md> <delivered-chapter2.md> --strict --layout-review <work-dir/layout-review.json> --report <work-dir/coverage.json>
+python <skill-dir>/scripts/check_note_coverage.py --sections <section-pack> --notes <audit-chapter1.md> <audit-chapter2.md> --strict --layout-review <work-dir/layout-review.json> --report <work-dir/coverage.json>
 ```
 
 没有排版例外时省略 `--layout-review`。`--notes` 按实际章节阅读顺序显式列出，不能依赖目录枚举或字母排序。旧调用保持宽松行为；最终交付使用 `--strict`，此时重复标记、来源乱序及未确认的空直接区域都会令退出码非零。
 
-直接区域指一个标记到下一标记之间的正文。相邻标记共享后续内容的机制仍保留；严格模式另检查前一个标记是否为空，避免删空正文后误借下一公式通过。合法跨页组合必须实际对照原页，然后记录**完整、连续的源块组**；并非所有相邻标记都能视为组合。仅评论或空白不是正文。非空文本也仍不能证明译文完整。
+直接区域指核对稿中一个标记到下一标记之间的正文。相邻标记共享后续内容的机制仍保留；严格模式另检查前一个标记是否为空，避免删空正文后误借下一公式通过。恢复被拆开的段落、目录、列表、表格或跨页续段时，对照原页后记录**完整、连续的源块组**；不能为绕过合并记录而把一个阅读单元写成多个碎段。并非所有相邻标记都能视为组合。仅评论或空白不是正文。非空文本也仍不能证明译文完整。
 
 例外文件采用 `mineru4-layout-review/1`，source_id 必须与范围包一致。下面的 ID、原因和证据只是字段示例，使用时填写真实对照结果：
 
@@ -78,7 +78,7 @@ python <skill-dir>/scripts/check_note_coverage.py --sections <section-pack> --no
 
 | 事实 | 必须说明的实际依据 | 不能据此推断 |
 |---|---|---|
-| 结构覆盖 | 最终文件、范围、严格报告及未处理项 | 逐句译文完整或正确 |
+| 结构覆盖 | 定稿核对稿、范围、严格报告及对应阅读稿的输出记录 | 逐句译文完整或正确 |
 | 资源一致 | 图片摘要、资源差异的来源对照、实际查看范围 | 全部图片清晰、所有 OCR 正确 |
 | 来源复读 | 对照了哪些小节/页/块，条件、例子、脚注及代码的结果 | 抽查之外内容也已经逐段核对 |
 | 讲解复读 | 实际复读的难点，决定性中间步骤与原文结论是否连接 | 所有主题均达到同一深度 |
